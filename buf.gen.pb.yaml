@@ -1,0 +1,7 @@
+version: v2
+plugins:
+  # 只生成 Go 代码。插件自身依赖 gen/sgorm（options 的 pb），
+  # 所以首次生成要先用这个模板产出 options.pb.go，再编译插件。
+  - local: protoc-gen-go
+    out: .
+    opt: module=github.com/jenken827/protoc-gen-sgorm

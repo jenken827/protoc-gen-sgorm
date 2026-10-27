@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package example;
+
+import "google/protobuf/timestamp.proto";
+import "sgorm/options.proto";
+
+option go_package = "github.com/jenken827/protoc-gen-sgorm/example/gen/native;native";
+
+// TransactionType 交易类型。
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  EXPENSE = 1;
+  INCOME = 2;
+}
+
+// Transaction 交易记录表
+//
+// 用来验证：自增主键、时间戳三件套（含软删）、枚举、列名改写、索引、忽略字段、
+// repeated 字段（无对应列）以及注释透传。
+message Transaction {
+  option (sgorm.opts).ormable = true;
+
+  optional uint32 id = 1 [(sgorm.field).tag = {primary_key: true, auto_increment: true}];
+  optional google.protobuf.Timestamp created_at = 2 [(sgorm.field).tag = {auto_create_time: true}];
+  optional google.protobuf.Timestamp updated_at = 3 [(sgorm.field).tag = {auto_update_time: true}];
+  optional google.protobuf.Timestamp deleted_at = 4 [(sgorm.field).tag = {type: "deleted_at"}];
+
+  optional int64 amount = 5 [(sgorm.field).tag = {not_null: true, default: "0"}]; // 金额，单位为分
+  // 交易类型：支出 / 收入
+  optional TransactionType type = 6 [(sgorm.field).tag = {not_null: true}];
+  // 所属用户 ID（库里叫 owner_id）
+  optional string user_id = 7 [(sgorm.field).tag = {not_null: true, column: "owner_id", index: "idx_t_transaction_owner"}];
+  // 备注只给接口用，不落库
+  optional string note = 8 [(sgorm.field).ignore = true];
+  // 标签走关联表，没有对应列
+  repeated uint32 tag_ids = 9;
+}
+
+// File 文件表
+//
+// 用来验证：UUID 字符串主键、列类型覆盖、软删。
+message File {
+  option (sgorm.opts).ormable = true;
+  option (sgorm.opts).table = "files";
+
+  optional string id = 1 [(sgorm.field).tag = {primary_key: true, column: "id", type: "uuid"}];
+  optional google.protobuf.Timestamp created_at = 2 [(sgorm.field).tag = {auto_create_time: true}];
+  optional google.protobuf.Timestamp updated_at = 3 [(sgorm.field).tag = {auto_update_time: true}];
+  optional google.protobuf.Timestamp deleted_at = 4 [(sgorm.field).tag = {type: "deleted_at"}];
+
+  optional string name = 5 [(sgorm.field).tag = {not_null: true, size: 255}];
+  optional uint64 size = 6 [(sgorm.field).tag = {default: "0"}];
+  optional bool is_dir = 7 [(sgorm.field).tag = {not_null: true, default: "false"}];
+  optional string bound_provider_ids = 8 [(sgorm.field).tag = {serializer: "json"}];
+}
+
+// Person 用来验证 table 覆盖（不规则复数）
+message Person {
+  option (sgorm.opts).ormable = true;
+  option (sgorm.opts).table = "people";
+
+  optional uint32 id = 1 [(sgorm.field).tag = {primary_key: true, auto_increment: true}];
+  optional string name = 2 [(sgorm.field).tag = {unique_index: "idx_person_name"}];
+}
+
+// ListTransactionReq 是纯接口 DTO，没有 ormable，不应生成实体
+message ListTransactionReq {
+  optional int32 page = 1;
+  optional int32 page_size = 2;
+}
+
+// ListTransactionRespData 响应里引用实体消息，同样不生成实体
+message ListTransactionRespData {
+  repeated Transaction list = 1;
+  optional int32 total = 2;
+}

@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  # 完整生成：options 的 pb + example 的 pb + sgorm 实体。
+  - local: protoc-gen-go
+    out: .
+    opt: module=github.com/jenken827/protoc-gen-sgorm
+  - local: protoc-gen-sgorm
+    out: example/gen/entity
+    opt: package=entity
