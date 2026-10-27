@@ -1,5 +1,7 @@
 # protoc-gen-sgorm
 
+> agent 手册（`AGENTS.md`）在**本机文档仓库**（加密，与本项目同名的那份）；本仓库只留 `README.md`。
+
 把 proto 消息生成 GORM 实体（**sgorm** = simple gorm）的 protoc 插件。
 
 每个带 `option (sgorm.opts).ormable = true;` 的消息生成三样东西：
